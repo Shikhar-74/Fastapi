@@ -39,5 +39,21 @@ async def read_form():
 @app.post("/submit")
 async def submit_form(name: str = Form(...), email: str = Form(...), message: str = Form(...)):
     form_data = FormData(name=name, email=email, message=message)
-    collection.insert_one(form_data.dict())
+    
+    # Search criteria that matches any of the provided fields
+    query = {
+        "$or": [
+            {"name": name},
+            {"email": email},
+            {"message": message}
+        ]
+    }
+    
+    # Update or insert based on the criteria
+    collection.update_one(
+        query,                           # Search criteria based on any field
+        {"$set": form_data.dict()},      # Update the document with new data
+        upsert=True                      # Insert a new document if no match is found
+    )
+    
     return {"message": "Form submitted successfully"}
